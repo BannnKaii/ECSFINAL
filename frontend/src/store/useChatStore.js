@@ -33,28 +33,39 @@ export const useChatStore = create((set, get) => ({
       set({ isMessagesLoading: false });
     }
   },
-
+  
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
     try {
       const formData = new FormData();
+  
       Object.keys(messageData).forEach((key) => {
         if (messageData[key]) {
-          formData.append(key, messageData[key]);
+          // Include the original file name in the formData for 'filePreview'
+          if (key === "file" && messageData[key].data) {
+            formData.append("file", messageData[key].data);
+            formData.append("fileName", messageData[key].name); // Append original file name
+          } else {
+            formData.append(key, messageData[key]);
+          }
         }
       });
-
+  
       const res = await axiosInstance.post(
         `/messages/send/${selectedUser._id}`,
         formData
       );
-
+  
       set({ messages: [...messages, res.data] });
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to send message.");
     }
   },
+  
+  
+  
 
+  
   subscribeToMessages: () => {
     const { selectedUser } = get();
     if (!selectedUser) return;
@@ -71,6 +82,7 @@ export const useChatStore = create((set, get) => ({
       }
     });
   },
+  
 
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;

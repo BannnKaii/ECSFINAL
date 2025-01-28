@@ -77,21 +77,33 @@ const ChatContainer = () => {
                   className="sm:max-w-[200px] rounded-md mb-2"
                 />
               )}
-              {message.file && (
-                <a
-                  href={message.file}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 underline break-all mb-2"
-                >
-                   {decodeURIComponent(message.file.split("/").pop())} {/* Display file name */}
-                </a>
-              )}
+            {message.file && (
+  <a
+    href={`${message.file}?fl_attachment=true`} // Cloudinary attachment flag
+    download={message.fileName} // Correctly formatted file name
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-blue-500 underline break-all mb-2"
+  >
+    {message.fileName || "Download File"}
+  </a>
+)}
+
+
+
+
+  
+
+
+
+
+              
+
              {message.text && <p>{message.text}</p>}
             </div>
           </div>
         ))}
-      </div>
+      </div> 
       <MessageInput />
     </div>
   );

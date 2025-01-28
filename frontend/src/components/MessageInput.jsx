@@ -54,6 +54,7 @@ const MessageInput = () => {
         text: text.trim(),
         image: imagePreview,
         file: filePreview?.data,
+        fileName: filePreview?.name,
       });
 
       // Clear form

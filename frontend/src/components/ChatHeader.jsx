@@ -1,4 +1,4 @@
-import { X,Eye } from "lucide-react";
+import { X } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import { Link } from "react-router-dom";
@@ -19,18 +19,16 @@ const ChatHeader = () => {
           </div>
 
           {/* User info */}
+          <Link to={"/selecteduserprofile"} >
           <div>
             <h3 className="font-medium">{selectedUser.fullName}</h3>
             <p className="text-sm text-base-content/70">
               {onlineUsers.includes(selectedUser._id) ? "Online" : "Offline"}
             </p>
           </div>
+          </Link>
+          
         </div>
-
-        <Link to={"/selecteduserprofile"} >
-                  <Eye />
-                   
-                </Link>
 
         {/* Close button */}
         <button onClick={() => setSelectedUser(null)}>

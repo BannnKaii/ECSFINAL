@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
-import { Camera, Mail, User } from "lucide-react";
+import { Camera, Mail, User,GraduationCap  } from "lucide-react";
 
 const ProfilePage = () => {
   const { authUser, isUpdatingProfile,isUpdatingSemester, updateProfile,updateSemester } = useAuthStore();
@@ -69,7 +69,7 @@ const ProfilePage = () => {
   
       if (response.ok) {
         const data = await response.json();
-       alert(`Course updated successfully to ${data.Course}!`);
+       //alert(`Course updated successfully to ${data.Course}!`);
         setCourse(data.course); // Update UI with new semester
       } else {
         const errorText = await response.text();
@@ -187,6 +187,9 @@ const ProfilePage = () => {
             </button>
           </div>
 
+          
+
+
           <div className="space-y-6">
             <div className="space-y-1.5">
               <div className="text-sm text-zinc-400 flex items-center gap-2">
@@ -197,6 +200,21 @@ const ProfilePage = () => {
                 {authUser?.fullName}
               </p>
             </div>
+
+
+            <div className="space-y-6">
+            <div className="space-y-1.5">
+              <div className="text-sm text-zinc-400 flex items-center gap-2">
+                <GraduationCap className="w-4 h-4" />
+                College Name
+              </div>
+              <p className="px-4 py-2.5 bg-base-200 rounded-lg border">
+                {authUser?.collegeName}
+              </p>
+            </div>
+           </div>
+
+
 
             <div className="space-y-1.5">
               <div className="text-sm text-zinc-400 flex items-center gap-2">

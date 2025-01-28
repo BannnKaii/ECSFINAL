@@ -46,9 +46,10 @@ export const getMessages = async (req, res) => {
   }
 };
 
+
 export const sendMessage = async (req, res) => {
   try {
-    const { text, image, file } = req.body;
+    const { text, image, file, fileName } = req.body; // Include `fileName`
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
@@ -60,11 +61,18 @@ export const sendMessage = async (req, res) => {
     }
 
     if (file) {
+      const fileExtension = fileName.split('.').pop(); // Extract the file extension
+      const publicId = fileName.split('.').slice(0, -1).join('_'); // Remove the extension from the file name
+    
       const fileUploadResponse = await cloudinary.uploader.upload(file, {
-        resource_type: "raw",
+        resource_type: "raw", // Required for non-image files
+        use_filename: true,   // Use the original file name
+        unique_filename: false, // Prevent Cloudinary from appending unique strings
+        public_id: `${publicId}.${fileExtension}`, // Include the extension in the public_id
       });
       fileUrl = fileUploadResponse.secure_url;
     }
+    
 
     const newMessage = new Message({
       senderId,
@@ -72,6 +80,7 @@ export const sendMessage = async (req, res) => {
       text,
       image: imageUrl,
       file: fileUrl,
+      fileName, // Save the original file name
     });
 
     await newMessage.save();
