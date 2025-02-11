@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
-import {  Send, X, Paperclip } from "lucide-react";
+
+import { Send, X, Paperclip } from "lucide-react";
 import toast from "react-hot-toast";
 
 const MessageInput = () => {
@@ -9,7 +10,7 @@ const MessageInput = () => {
   const [filePreview, setFilePreview] = useState(null);
   const fileInputRef = useRef(null);
   const { sendMessage } = useChatStore();
-
+  
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file.type.startsWith("image/")) {
@@ -50,6 +51,7 @@ const MessageInput = () => {
     if (!text.trim() && !imagePreview && !filePreview) return;
 
     try {
+     
       await sendMessage({
         text: text.trim(),
         image: imagePreview,
@@ -96,42 +98,42 @@ const MessageInput = () => {
         </div>
       )}
 
-<form onSubmit={handleSendMessage} className="flex items-center gap-2">
-  <div className="flex-1 flex gap-2">
-    <input
-      type="text"
-      className="w-full input input-bordered rounded-lg input-sm sm:input-md"
-      placeholder="Type a message..."
-      value={text}
-      onChange={(e) => setText(e.target.value)}
-    />
-    <input
-      type="file"
-      accept="image/*,.pdf,.doc,.docx"
-      className="hidden"
-      ref={fileInputRef}
-      onChange={(e) =>
-        e.target.files[0]?.type.startsWith("image/")
-          ? handleImageChange(e)
-          : handleFileChange(e)
-      }
-    />
-    <button
-      type="button"
-      onClick={() => fileInputRef.current?.click()}
-      className="btn btn-circle mr-1" // Reduced spacing using margin-right
-    >
-      <Paperclip size={20} />
-    </button>
-  </div>
-  <button
-    type="submit"
-    className="btn btn-circle"
-    disabled={!text.trim() && !imagePreview && !filePreview}
-  >
-    <Send size={20} />
-  </button>
-</form>
+      <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+        <div className="flex-1 flex gap-2">
+          <input
+            type="text"
+            className="w-full input input-bordered rounded-lg input-sm sm:input-md"
+            placeholder="Type a message..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <input
+            type="file"
+            accept="image/*,.pdf,.doc,.docx"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={(e) =>
+              e.target.files[0]?.type.startsWith("image/")
+                ? handleImageChange(e)
+                : handleFileChange(e)
+            }
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="btn btn-circle mr-1" // Reduced spacing using margin-right
+          >
+            <Paperclip size={20} />
+          </button>
+        </div>
+        <button
+          type="submit"
+          className="btn btn-circle"
+          disabled={!text.trim() && !imagePreview && !filePreview}
+        >
+          <Send size={20} />
+        </button>
+      </form>
 
     </div>
   );

@@ -1,13 +1,11 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
-
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
-
     const loggedInUser = await User.findById(loggedInUserId);
 
     if (!loggedInUser) {
@@ -32,6 +30,19 @@ export const getMessages = async (req, res) => {
     const { id: userToChatId } = req.params;
     const myId = req.user._id;
 
+    // Fetch both users and ensure `blockedUsers` is populated
+    const loggedInUser = await User.findById(myId).populate("blockedUsers");
+    const chatUser = await User.findById(userToChatId).populate("blockedUsers");
+
+    if (!loggedInUser || !chatUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // ✅ Check if either user has blocked the other
+    if (loggedInUser.blockedUsers.includes(userToChatId) || chatUser.blockedUsers.includes(myId)) {
+      return res.status(403).json({ error: "Cannot fetch messages. User is blocked." });
+    }
+
     const messages = await Message.find({
       $or: [
         { senderId: myId, receiverId: userToChatId },
@@ -46,12 +57,28 @@ export const getMessages = async (req, res) => {
   }
 };
 
-
 export const sendMessage = async (req, res) => {
   try {
-    const { text, image, file, fileName } = req.body; // Include `fileName`
+    const { text, image, file, fileName } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
+
+    const sender = await User.findById(senderId);
+    const receiver = await User.findById(receiverId);
+
+    if (!sender || !receiver) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // ✅ Prevent User A from sending messages if they blocked User B
+    if (sender.blockedUsers.includes(receiverId)) {
+      return res.status(403).json({ error: "You have blocked this user." });
+    }
+
+    // ✅ Prevent User B from receiving messages if they blocked User A
+    if (receiver.blockedUsers.includes(senderId)) {
+      return res.status(403).json({ error: "You are blocked by this user." });
+    }
 
     let imageUrl, fileUrl;
 
@@ -61,18 +88,9 @@ export const sendMessage = async (req, res) => {
     }
 
     if (file) {
-      const fileExtension = fileName.split('.').pop(); // Extract the file extension
-      const publicId = fileName.split('.').slice(0, -1).join('_'); // Remove the extension from the file name
-    
-      const fileUploadResponse = await cloudinary.uploader.upload(file, {
-        resource_type: "raw", // Required for non-image files
-        use_filename: true,   // Use the original file name
-        unique_filename: false, // Prevent Cloudinary from appending unique strings
-        public_id: `${publicId}.${fileExtension}`, // Include the extension in the public_id
-      });
+      const fileUploadResponse = await cloudinary.uploader.upload(file, { resource_type: "raw" });
       fileUrl = fileUploadResponse.secure_url;
     }
-    
 
     const newMessage = new Message({
       senderId,
@@ -80,13 +98,16 @@ export const sendMessage = async (req, res) => {
       text,
       image: imageUrl,
       file: fileUrl,
-      fileName, // Save the original file name
+      fileName,
     });
+
+   
 
     await newMessage.save();
 
+    // ✅ Emit message only if the receiver has NOT blocked the sender
     const receiverSocketId = getReceiverSocketId(receiverId);
-    if (receiverSocketId) {
+    if (receiverSocketId && !receiver.blockedUsers.includes(senderId)) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
     }
 

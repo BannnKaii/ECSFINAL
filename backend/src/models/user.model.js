@@ -25,6 +25,12 @@
     course: { type: String, required: true },
     semester: { type: String, required: true },
     
+
+    blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    isAdmin: { type: Boolean, default: false },
+
+    isBanned: { type: Boolean, default: false }
+
    },
    { timestamps: true }
  );

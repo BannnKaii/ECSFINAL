@@ -9,6 +9,9 @@ import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import { app, server } from "./lib/socket.js";
 
+import reportRoutes from "./routes/report.route.js"; 
+import userRoutes from "./routes/user.route.js"; 
+import adminRoutes from "./routes/admin.route.js";
 dotenv.config();
 
 const PORT = process.env.PORT;
@@ -35,6 +38,9 @@ app.options("*", cors());
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
+app.use("/api/users", userRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/admin", adminRoutes);
 // Start the server
 server.listen(PORT, () => {
   console.log("Server is running on PORT: " + PORT);

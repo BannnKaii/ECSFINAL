@@ -54,6 +54,7 @@ const ProfilePage = () => {
     }
   };
   
+  console.log("💡 authUser in ProfilePage:", authUser);
 
   const handleCourseUpdate = async () => {
     try {

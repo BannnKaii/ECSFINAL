@@ -2,12 +2,13 @@ import { create } from "zustand";
 import { axiosInstance } from "../lib/axios.js"; 
 import toast from "react-hot-toast";
 import {io} from "socket.io-client";
+import { useChatStore } from "./useChatStore.js";
 
 const BASE_URL="http://localhost:5001"
 
 export const useAuthStore = create((set, get) => ({
     authUser: null,
-    isSigningUp: false,
+    isSigningUp: false,   
     isLoggingIn: false,
     isUpdatingProfile: false,
     isUpdatingSemester:false,
@@ -15,19 +16,71 @@ export const useAuthStore = create((set, get) => ({
     onlineUsers: [],
     socket:null,
 
-    checkAuth: async () => {
-        try {
-          const res = await axiosInstance.get("/auth/check");
-    
-          set({ authUser:res.data });
-          get().connectSocket();
-        } catch (error) {
-          console.log("Error in checkAuth:", error);
+    checkAuth: async () => {  
+      try {
+          const res = await axiosInstance.get("/auth/check", { withCredentials: true });
+  
+          if (res.data) {
+              set({ authUser: res.data }); // ✅ Ensure isAdmin is stored correctly
+              get().connectSocket();
+          }
+      } catch (error) {
           set({ authUser: null });
-        } finally {
+      } finally {
           set({ isCheckingAuth: false });
+      }
+  },
+  
+
+
+      blockUser: async (userId) => {
+        try {
+          await axiosInstance.put(`/users/block/${userId}`);
+          set((state) => ({
+            authUser: {
+              ...state.authUser,
+              blockedUsers: [...state.authUser.blockedUsers, userId],
+            },
+          }));
+          toast.success("User blocked successfully.");
+        } catch (error) {
+          toast.error("Failed to block user.");
         }
       },
+      unblockUser: async (userId) => {
+        try {
+          const res = await axiosInstance.put(`/users/unblock/${userId}`);
+         
+            console.log("✅ Unblock API response:", res.data);
+      
+            set((state) => ({
+              authUser: {
+                ...state.authUser,
+                blockedUsers: res.data.blockedUsers || [],
+              },
+            }));
+            useChatStore.getState().subscribeToMessages()
+            toast.success("User unblocked successfully.")
+           
+      
+            // ✅ Re-check authentication state after unblocking
+            await get().checkAuth();
+         
+          
+           
+          
+        } catch (error) {
+          console.error("Unblock API error:", error.response?.data?.message || error.message);
+          toast.error(error.response?.data?.message || "Failed to unblock user.");
+        }
+      },
+      
+       
+      
+      
+
+
+
 
       signup: async (data)=> {
         set({ isSigningUp: true });
@@ -43,21 +96,39 @@ export const useAuthStore = create((set, get) => ({
           set({ isSigningUp: false });
         }
       },
-
-      login: async (data) => {
+      login: async (data, navigate) => { 
         set({ isLoggingIn: true });
         try {
-          const res = await axiosInstance.post("/auth/login", data);
-          set({ authUser: res.data });
-          toast.success("Logged in successfully");
+            const res = await axiosInstance.post("/auth/login", data);
+            
+            if (!res.data || typeof res.data.isAdmin === "undefined") {
+                throw new Error("Login response missing isAdmin field");
+            }
     
-          get().connectSocket();
+            set({ authUser: res.data });
+    
+            toast.success("Logged in successfully");
+    
+            get().connectSocket();
+    
+            console.log("💡 Login response:", res.data); 
+            console.log("💡 Navigating to:", res.data.isAdmin ? "/admin" : "/");
+    
+            // ✅ Force navigation after state update
+            setTimeout(() => {
+                navigate(res.data.isAdmin ? "/admin" : "/");
+            }, 100);
+            
         } catch (error) {
-          toast.error(error.response.data.message);
+            console.error("Login error:", error.response?.data?.message || error.message);
+            toast.error(error.response?.data?.message || "Login failed");
         } finally {
-          set({ isLoggingIn: false });
+            set({ isLoggingIn: false });
         }
-      },
+    },
+    
+    
+    
       
 
       updateProfile: async (data) => {
@@ -117,10 +188,28 @@ export const useAuthStore = create((set, get) => ({
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
+
+    socket.on("banned", (data) => {
+      toast.error(data.message || "You have been banned from the app.");
+      get().logout();
+    });
+
+
   },
 
   disconnectSocket:()=>{
     if(get().socket?.connected)get().socket.disconnect();
   },
+
+
+  reportUser: async (reportedUser, reason, description) => {
+    try {
+      await axiosInstance.post("/reports", { reportedUser, reason, description });
+      toast.success("Report submitted successfully.");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to submit report.");
+    }
+  },
+
     }));
     //D:\chat\frontend\src\store\useAuthStore.js

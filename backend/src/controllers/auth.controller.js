@@ -74,12 +74,16 @@ export const login = async (req, res) => {
       fullName: user.fullName,
       email: user.email,
       profilePic: user.profilePic,
+      isAdmin: user.isAdmin || false, // ✅ Ensure isAdmin is always included
+      blockedUsers: user.blockedUsers.map((blocked) => blocked._id.toString()) || [],
     });
   } catch (error) {
     console.log("Error in login controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
 
 export const logout = (req, res) => {
   try {
@@ -178,12 +182,34 @@ export const updateCourse = async (req, res) => {
   }
 };
 
-
-export const checkAuth = (req, res) => {
+export const checkAuth = async (req, res) => {
   try {
-    res.status(200).json(req.user);
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ message: "Unauthorized - User not found" });
+    }
+
+    const user = await User.findById(req.user._id).select("-password").populate("blockedUsers");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      profilePic: user.profilePic,
+      collegeName: user.collegeName, // ✅ Ensure this is included
+      course: user.course,
+      semester: user.semester,
+      isAdmin: user.isAdmin, // ✅ Include Admin Status
+      blockedUsers: user.blockedUsers.map(user => user._id.toString()) || [],
+    });
   } catch (error) {
-    console.log("Error in checkAuth controller", error.message);
+    console.error("Error in checkAuth controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
+
