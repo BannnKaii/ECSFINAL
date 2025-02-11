@@ -1,16 +1,19 @@
 import { useRef, useState } from "react";
+import { Paperclip, Send, X } from "lucide-react";
+import toast from "react-hot-toast";
 import { useChatStore } from "../store/useChatStore";
 
-import { Send, X, Paperclip } from "lucide-react";
-import toast from "react-hot-toast";
-
-const MessageInput = () => {
+const MessageInput = ({ sendMessage: customSendMessage }) => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const fileInputRef = useRef(null);
+
+  // If a custom sendMessage function is provided via props, use it.
+  // Otherwise, default to the one from useChatStore.
   const { sendMessage } = useChatStore();
-  
+  const sendMsg = customSendMessage || sendMessage;
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file.type.startsWith("image/")) {
@@ -51,15 +54,14 @@ const MessageInput = () => {
     if (!text.trim() && !imagePreview && !filePreview) return;
 
     try {
-     
-      await sendMessage({
+      await sendMsg({
         text: text.trim(),
         image: imagePreview,
         file: filePreview?.data,
         fileName: filePreview?.name,
       });
 
-      // Clear form
+      // Clear form after sending
       setText("");
       setImagePreview(null);
       setFilePreview(null);
@@ -121,7 +123,7 @@ const MessageInput = () => {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="btn btn-circle mr-1" // Reduced spacing using margin-right
+            className="btn btn-circle mr-1"
           >
             <Paperclip size={20} />
           </button>
@@ -134,7 +136,6 @@ const MessageInput = () => {
           <Send size={20} />
         </button>
       </form>
-
     </div>
   );
 };

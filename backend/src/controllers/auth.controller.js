@@ -74,6 +74,9 @@ export const login = async (req, res) => {
       fullName: user.fullName,
       email: user.email,
       profilePic: user.profilePic,
+      collegeName: user.collegeName, // if needed
+      course: user.course,           // add this
+      semester: user.semester,       // add this
       isAdmin: user.isAdmin || false, // ✅ Ensure isAdmin is always included
       blockedUsers: user.blockedUsers.map((blocked) => blocked._id.toString()) || [],
     });

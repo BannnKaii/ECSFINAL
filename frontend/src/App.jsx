@@ -7,6 +7,7 @@ import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
 import  SelectedUserProfile from "./pages/SelectedUserProfile";
 import AdminPage from "./pages/AdminPage";
+import GroupChatPage from "./pages/GroupChatPage";
 
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
@@ -63,6 +64,7 @@ function App() {
         
         <Route path="/admin" element={authUser && authUser.isAdmin ? <AdminPage /> : <Navigate to="/" />} />
 
+        <Route path="/group-chat" element={authUser ? <GroupChatPage /> :  <Navigate to="/login" />} />
 
       </Routes>
 

@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 import {io} from "socket.io-client";
 import { useChatStore } from "./useChatStore.js";
 
+import { useGroupChatStore } from "./useGroupChatStore";
+
 const BASE_URL="http://localhost:5001"
 
 export const useAuthStore = create((set, get) => ({
@@ -175,15 +177,35 @@ export const useAuthStore = create((set, get) => ({
 
   connectSocket:()=>{
     const {authUser} = get()
-    if (!authUser|| get().socket?.connected) return;
+    
+
+    if (!authUser || !authUser.course || !authUser.semester) {
+      console.warn("⚠️ Skipping socket connection: Missing user data", authUser);
+      return;
+  }
+  if (get().socket) return;
+
+  console.log("🔗 Connecting socket for user:", authUser._id, "Course:", authUser.course, "Semester:", authUser.semester);
+
+
     const socket = io(BASE_URL,{
      query:{
       userId:authUser._id,
      },
     });
-    socket.connect();
+    //socket.connect();
 
     set({ socket:socket});
+
+
+    socket.on("connect", () => {
+      console.log("✅ Socket connected with ID:", socket.id);
+      
+      // ✅ Ensure user is subscribed to real-time group messages
+      useGroupChatStore.getState().subscribeToGroupMessages();
+  });
+
+
 
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
