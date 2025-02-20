@@ -62,6 +62,11 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+
+    if (user.isBanned) {
+      return res.status(403).json({ message: "Your account has been banned." });
+    }
+
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
       return res.status(400).json({ message: "Invalid credentials" });
@@ -153,37 +158,7 @@ export const updateSemester = async (req, res) => {
   }
 };
 
-export const updateCourse = async (req, res) => {
-  try {
-    console.log("User ID:", req.user._id);
-    console.log("Course:", req.body.course);
 
-    const { course } = req.body;
-    const userId = req.user._id;
-
-    if (! course) {
-      console.log("Validation failed:  course is required");
-      return res.status(400).json({ message: " course is required" });
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      {  course },
-      { new: true }
-    );
-
-    if (!updatedUser) {
-      console.log("User not found");
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    console.log(" course updated successfully:", updatedUser. course);
-    res.status(200).json({  course: updatedUser. course });
-  } catch (error) {
-    console.error("Error in updateCourse:", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
 
 export const checkAuth = async (req, res) => {
   try {

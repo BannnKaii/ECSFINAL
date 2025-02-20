@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
-import { Camera, Mail, User,GraduationCap  } from "lucide-react";
+import { Camera, Mail, User, GraduationCap, Notebook } from "lucide-react";
+import toast from "react-hot-toast";
 
 const ProfilePage = () => {
-  const { authUser, isUpdatingProfile,isUpdatingSemester, updateProfile,updateSemester } = useAuthStore();
+  const { authUser, isUpdatingProfile, isUpdatingSemester, updateProfile, updateSemester, deleteAccount } = useAuthStore();
   const [selectedImg, setSelectedImg] = useState(null);
   const [semester, setSemester] = useState(authUser?.semester || "");
-  const [course, setCourse] = useState(authUser?.course || "");
+  const [showModal, setShowModal] = useState(false);
+  const [reason, setReason] = useState("");
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
-
     reader.readAsDataURL(file);
 
     reader.onload = async () => {
@@ -29,16 +30,15 @@ const ProfilePage = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${authUser.token}`, // Send token in Authorization header
+          Authorization: `Bearer ${authUser.token}`,
         },
         body: JSON.stringify({ semester }),
-        credentials: "include", // Include cookies in the request
+        credentials: "include",
       });
-  
+
       if (response.ok) {
         const data = await response.json();
-       // alert(`Semester updated successfully to ${data.semester}!`);
-        setSemester(data.semester); // Update UI with new semester
+        setSemester(data.semester);
       } else {
         const errorText = await response.text();
         try {
@@ -53,40 +53,29 @@ const ProfilePage = () => {
       alert("An error occurred while updating the semester.");
     }
   };
-  
-  console.log("💡 authUser in ProfilePage:", authUser);
 
-  const handleCourseUpdate = async () => {
-    try {
-      const response = await fetch("http://localhost:5001/api/auth/update-course", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authUser.token}`, // Send token in Authorization header
-        },
-        body: JSON.stringify({ course }),
-        credentials: "include", // Include cookies in the request
-      });
-  
-      if (response.ok) {
-        const data = await response.json();
-       //alert(`Course updated successfully to ${data.Course}!`);
-        setCourse(data.course); // Update UI with new semester
-      } else {
-        const errorText = await response.text();
-        try {
-          const errorData = JSON.parse(errorText);
-          alert(errorData.message || "Failed to update course");
-        } catch {
-          alert(errorText || "An unknown error occurred");
-        }
-      }
-    } catch (error) {
-      console.error("Error updating course:", error);
-      alert("An error occurred while updating the course.");
+  const handleDelete = async () => {
+    console.log("🚀 Delete button clicked"); // ✅ Debugging log
+
+    if (!reason) {
+        toast.error("Please select a reason for account deletion.");
+        console.log("❌ No reason selected, aborting...");
+        return;
     }
-  };
-  
+
+    try {
+        console.log("🚀 Sending delete request with reason:", reason);
+        await deleteAccount(reason);
+        setShowModal(false);
+        toast.success("Account deleted successfully.");
+        console.log("✅ Account deletion completed.");
+    } catch (error) {
+        console.error("❌ Error deleting account:", error);
+        toast.error("Failed to delete account. Please try again.");
+    }
+};
+
+
 
   return (
     <div className="h-screen pt-20">
@@ -97,7 +86,7 @@ const ProfilePage = () => {
             <p className="mt-2">Your profile information</p>
           </div>
 
-          {/* Avatar upload section */}
+          {/* Avatar Upload */}
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
               <img
@@ -123,9 +112,7 @@ const ProfilePage = () => {
               </label>
             </div>
             <p className="text-sm text-zinc-400">
-              {isUpdatingProfile
-                ? "Uploading..."
-                : "Click the camera icon to update your photo"}
+              {isUpdatingProfile ? "Uploading..." : "Click the camera icon to update your photo"}
             </p>
           </div>
 
@@ -159,88 +146,88 @@ const ProfilePage = () => {
             </button>
           </div>
 
-          {/* Course Update Section */}
-          <div className="mt-6">
-            <label htmlFor="semester" className="block text-sm font-medium">
-            Course
-            </label>
-            <select
-              id="course"
-              className="w-full px-4 py-2.5 bg-base-200 rounded-lg border mt-2"
-              value={course}
-              onChange={(e) => setCourse(e.target.value)}
-              disabled={isUpdatingSemester}
-            >
-              <option value="" disabled>
-                Select your course
-                Select your semester
-  </option>
-  <option value="BCA">BCA</option>
-  <option value="BBA">BBA</option>
-  <option value="BA Economics">BA Economics</option>
-</select>
+          {/* Course Information (Read-Only) */}
+          <div className="space-y-1.5">
+            <div className="text-sm text-zinc-400 flex items-center gap-2">
+              <Notebook className="w-4 h-4" />
+              Course
+            </div>
+            <p className="px-4 py-2.5 bg-base-200 rounded-lg border">
+              {authUser?.course}
+            </p>
+          </div>
+
+          {/* Full Name */}
+          <div className="space-y-1.5">
+            <div className="text-sm text-zinc-400 flex items-center gap-2">
+              <User className="w-4 h-4" />
+              Full Name
+            </div>
+            <p className="px-4 py-2.5 bg-base-200 rounded-lg border">
+              {authUser?.fullName}
+            </p>
+          </div>
+
+          {/* College Name */}
+          <div className="space-y-1.5">
+            <div className="text-sm text-zinc-400 flex items-center gap-2">
+              <GraduationCap className="w-4 h-4" />
+              College Name
+            </div>
+            <p className="px-4 py-2.5 bg-base-200 rounded-lg border">
+              {authUser?.collegeName}
+            </p>
+          </div>
+
+          {/* Email Address */}
+          <div className="space-y-1.5">
+            <div className="text-sm text-zinc-400 flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              Email Address
+            </div>
+            <p className="px-4 py-2.5 bg-base-200 rounded-lg border">
+              {authUser?.email}
+            </p>
+          </div>
+
+          {/* Delete Account Section */}
+          <div className="text-center mt-6">
             <button
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg"
-              onClick={handleCourseUpdate}
-              disabled={isUpdatingSemester}
+              onClick={() => setShowModal(true)}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg"
             >
-              Update Course
+              Delete Account
             </button>
           </div>
 
-          
+          {showModal && (
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
+            <div className="bg-white p-6 rounded-lg">
+                <h2 className="text-xl font-bold">Confirm Account Deletion</h2>
+                <p className="mt-2">Select a reason for deleting your account:</p>
+                <select 
+  id="deletionReason"  // ✅ Added unique ID
+  name="deletionReason"  // ✅ Added name attribute
+  value={reason} 
+  onChange={(e) => setReason(e.target.value)} 
+  className="w-full mt-2 p-2 border rounded"
+>
+  <option value="">Select a reason</option>
+  <option value="I Finished My Course">I Finished My Course</option>
+  <option value="I don't want to use this app anymore">I don't want to use this app anymore</option>
+</select>
 
-
-          <div className="space-y-6">
-            <div className="space-y-1.5">
-              <div className="text-sm text-zinc-400 flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Full Name
-              </div>
-              <p className="px-4 py-2.5 bg-base-200 rounded-lg border">
-                {authUser?.fullName}
-              </p>
-            </div>
-
-
-            <div className="space-y-6">
-            <div className="space-y-1.5">
-              <div className="text-sm text-zinc-400 flex items-center gap-2">
-                <GraduationCap className="w-4 h-4" />
-                College Name
-              </div>
-              <p className="px-4 py-2.5 bg-base-200 rounded-lg border">
-                {authUser?.collegeName}
-              </p>
-            </div>
-           </div>
-
-
-
-            <div className="space-y-1.5">
-              <div className="text-sm text-zinc-400 flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                Email Address
-              </div>
-              <p className="px-4 py-2.5 bg-base-200 rounded-lg border">
-                {authUser?.email}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 bg-base-300 rounded-xl p-6">
-            <h2 className="text-lg font-medium mb-4">Account Information</h2>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between py-2 border-b border-zinc-700">
-                <span>Member Since</span>
-                <span>{authUser.createdAt?.split("T")[0]}</span>
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <span>Account Status</span>
-                <span className="text-green-500">Active</span>
+                <div className="mt-4 flex justify-between">
+                  <button onClick={handleDelete} className="bg-red-600 text-white px-4 py-2 rounded">
+                    Confirm Delete
+                  </button>
+                  <button onClick={() => setShowModal(false)} className="bg-gray-400 px-4 py-2 rounded">
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import DeletedUser from "../models/deletedUser.model.js";
 
 export const blockUser = async (req, res) => {
   try {
@@ -39,3 +40,33 @@ export const unblockUser = async (req, res) => {
   }
 };
 
+
+
+export const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { reason } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Store user details in DeletedUser collection
+    await DeletedUser.create({
+      fullName: user.fullName,
+      email: user.email,
+      collegeName: user.collegeName,
+      course: user.course,
+      semester: user.semester,
+      createdAt: user.createdAt,
+      deletionReason: reason,
+    });
+
+    // Remove user from User collection
+    await User.findByIdAndDelete(userId);
+
+    res.status(200).json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting account:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

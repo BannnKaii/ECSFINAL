@@ -1,4 +1,3 @@
-// AdminReports.jsx
 import { useEffect, useState } from "react";
 import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
@@ -47,8 +46,8 @@ const AdminReports = () => {
         <table className="w-full border-collapse border">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border p-2">Reporter</th>
-              <th className="border p-2">Reported User</th>
+              <th className="border p-2">Reporter Info</th>
+              <th className="border p-2">Reported User Info</th>
               <th className="border p-2">Reason</th>
               <th className="border p-2">Description</th>
               <th className="border p-2">Status</th>
@@ -58,19 +57,45 @@ const AdminReports = () => {
           <tbody>
             {reports.map((report) => (
               <tr key={report._id} className="text-center">
-                <td className="border p-2">
-                  {report.reporter.fullName} ({report.reporter.email})
+                <td className="border p-2 text-left">
+                  {report.reporter ? (
+                    <>
+                      <strong>Name:</strong> {report.reporter.fullName} <br />
+                      <strong>Email:</strong> {report.reporter.email} <br />
+                      <strong>Course:</strong> {report.reporter.course} <br />
+                      <strong>Semester:</strong> {report.reporter.semester}
+                    </>
+                  ) : (
+                    <>
+                      <strong>Name:</strong> {report.reporterName || "Deleted User"} <br />
+                      <strong>Email:</strong> {report.reporterEmail || "N/A"} <br />
+                      <strong>Course:</strong> {report.reporterCourse || "N/A"} <br />
+                      <strong>Semester:</strong> {report.reporterSemester || "N/A"}
+                    </>
+                  )}
                 </td>
-                <td className="border p-2">
-                  {report.reportedUser.fullName} ({report.reportedUser.email})
+                <td className="border p-2 text-left">
+                  {report.reportedUser ? (
+                    <>
+                      <strong>Name:</strong> {report.reportedUser.fullName} <br />
+                      <strong>Email:</strong> {report.reportedUser.email} <br />
+                      <strong>Course:</strong> {report.reportedUser.course} <br />
+                      <strong>Semester:</strong> {report.reportedUser.semester}
+                    </>
+                  ) : (
+                    <>
+                      <strong>Name:</strong> {report.reportedUserName || "Deleted User"} <br />
+                      <strong>Email:</strong> {report.reportedUserEmail || "N/A"} <br />
+                      <strong>Course:</strong> {report.reportedUserCourse || "N/A"} <br />
+                      <strong>Semester:</strong> {report.reportedUserSemester || "N/A"}
+                    </>
+                  )}
                 </td>
                 <td className="border p-2">{report.reason}</td>
                 <td className="border p-2">{report.description || "N/A"}</td>
                 <td
                   className={`border p-2 ${
-                    report.status === "Reviewed"
-                      ? "text-green-500"
-                      : "text-red-500"
+                    report.status === "Reviewed" ? "text-green-500" : "text-red-500"
                   }`}
                 >
                   {report.status}

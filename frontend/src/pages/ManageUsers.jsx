@@ -30,7 +30,6 @@ const ManageUsers = () => {
     try {
       await axiosInstance.put(`/admin/ban/${userId}`);
       toast.success("User banned successfully");
-      // Optionally, remove the banned user from the list:
       setUsers(users.filter((user) => user._id !== userId));
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to ban user");
@@ -43,7 +42,7 @@ const ManageUsers = () => {
       <div className="mb-4">
         <input
           type="text"
-          placeholder="Search by name or email"
+          placeholder="Search by name, email, course, or semester"
           className="input input-bordered w-full"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -54,6 +53,8 @@ const ManageUsers = () => {
           <tr className="bg-gray-100">
             <th className="border p-2">Full Name</th>
             <th className="border p-2">Email</th>
+            <th className="border p-2">Course</th>
+            <th className="border p-2">Semester</th>
             <th className="border p-2">Actions</th>
           </tr>
         </thead>
@@ -62,6 +63,8 @@ const ManageUsers = () => {
             <tr key={user._id} className="text-center">
               <td className="border p-2">{user.fullName}</td>
               <td className="border p-2">{user.email}</td>
+              <td className="border p-2">{user.course}</td>
+              <td className="border p-2">{user.semester}</td>
               <td className="border p-2">
                 {user.isBanned ? (
                   <span className="text-red-500 font-bold">Banned</span>

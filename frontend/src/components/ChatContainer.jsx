@@ -1,5 +1,5 @@
 import { useChatStore } from "../store/useChatStore";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react"; // ADDED: useState import for dropdown state
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
@@ -14,9 +14,13 @@ const ChatContainer = () => {
     selectedUser,
     subscribeToMessages,
     unsubscribeFromMessages,
+    deleteMessage, // ADDED: deletion function from store
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
+
+  // ADDED: State to manage which message's dropdown is open
+  const [dropdownOpen, setDropdownOpen] = useState(null);
 
   useEffect(() => {
     getMessages(selectedUser._id);
@@ -29,6 +33,17 @@ const ChatContainer = () => {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  // ADDED: Toggle function for dropdown menu
+  const toggleDropdown = (messageId) => {
+    setDropdownOpen(dropdownOpen === messageId ? null : messageId);
+  };
+
+  // ADDED: Function to handle deletion of a message and close the dropdown
+  const handleDeleteMessage = async (messageId) => {
+    await deleteMessage(messageId);
+    setDropdownOpen(null);
+  };
 
   if (isMessagesLoading) {
     return (
@@ -69,7 +84,34 @@ const ChatContainer = () => {
                 {formatMessageTime(message.createdAt)}
               </time>
             </div>
-            <div className="chat-bubble flex flex-col">
+            <div className="chat-bubble flex flex-col relative">
+              {/* ADDED: DaisyUI dropdown for delete message, positioned to the left with extra spacing */}
+              {message.senderId === authUser._id && (
+                <div className="dropdown dropdown-start absolute top-0 -left-10">
+                  <button
+                    tabIndex={0}
+                    className="btn btn-ghost btn-circle"
+                    onClick={() => toggleDropdown(message._id)}
+                  >
+                    <div className="w-6">⋮</div>
+                  </button>
+                  {dropdownOpen === message._id && (
+                    <ul
+                      tabIndex={0}
+                      className="dropdown-content menu p-2 shadow bg-red-200 rounded-box w-32 z-50"
+                    >
+                      <li>
+                        <button
+                          onClick={() => handleDeleteMessage(message._id)}
+                          className="font-bold text-black" // ADDED: Bold and black text styling
+                        >
+                          Delete Message
+                        </button>
+                      </li>
+                    </ul>
+                  )}
+                </div>
+              )}
               {message.image && (
                 <img
                   src={message.image}
@@ -77,33 +119,22 @@ const ChatContainer = () => {
                   className="sm:max-w-[200px] rounded-md mb-2"
                 />
               )}
-            {message.file && (
-  <a
-    href={`${message.file}?fl_attachment=true`} // Cloudinary attachment flag
-    download={message.fileName} // Correctly formatted file name
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-blue-500 underline break-all mb-2"
-  >
-    {message.fileName || "Download File"}
-  </a>
-)}
-
-
-
-
-  
-
-
-
-
-              
-
-             {message.text && <p>{message.text}</p>}
+              {message.file && (
+                <a
+                  href={`${message.file}?fl_attachment=true`} // Cloudinary attachment flag
+                  download={message.fileName} // Correctly formatted file name
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 underline break-all mb-2"
+                >
+                  {message.fileName || "Download File"}
+                </a>
+              )}
+              {message.text && <p>{message.text}</p>}
             </div>
           </div>
         ))}
-      </div> 
+      </div>
       <MessageInput />
     </div>
   );

@@ -233,5 +233,19 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+
+
+
+  deleteAccount: async (reason) => {
+    try {
+      await axiosInstance.delete("/users/delete-account", { data: { reason } });
+      set({ authUser: null }); // ✅ Ensure user is logged out after deletion
+      toast.success("Account deleted successfully");
+      get().disconnectSocket();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete account.");
+    }
+},
+
     }));
     //D:\chat\frontend\src\store\useAuthStore.js

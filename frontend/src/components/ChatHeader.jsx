@@ -3,6 +3,8 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import { Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
+
 
 const ChatHeader = () => {
   const { selectedUser, setSelectedUser } = useChatStore();

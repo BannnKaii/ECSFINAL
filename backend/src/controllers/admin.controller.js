@@ -1,7 +1,8 @@
 // controllers/admin.controller.js
 import User from "../models/user.model.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
-
+import GroupMessage from "../models/groupMessage.model.js";
+import DeletedUser from "../models/deletedUser.model.js";
 // Controller to fetch all users (with optional search filtering)
 export const getUsers = async (req, res) => {
   try {
@@ -12,6 +13,8 @@ export const getUsers = async (req, res) => {
         $or: [
           { fullName: { $regex: search, $options: "i" } },
           { email: { $regex: search, $options: "i" } },
+          { course: { $regex: search, $options: "i" } },
+          { semester: { $regex: search, $options: "i" } },
         ],
       };
     }
@@ -49,5 +52,24 @@ export const banUser = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const clearGroupMessages = async (req, res) => {
+  try {
+    await GroupMessage.deleteMany({});
+    res.json({ message: "All group messages deleted successfully." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to clear group chat." });
+  }
+};
+
+export const getDeletedUsers = async (req, res) => {
+  try {
+    const deletedUsers = await DeletedUser.find().sort({ deletedAt: -1 });
+    res.json(deletedUsers);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch deleted users" });
   }
 };

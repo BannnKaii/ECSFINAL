@@ -62,3 +62,26 @@ export const sendGroupMessage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
+export const deleteGroupMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+    const message = await GroupMessage.findById(id);
+    if (!message) return res.status(404).json({ error: "Message not found" });
+    // Only the sender can delete the message
+    if (message.senderId.toString() !== userId.toString()) {
+      return res.status(403).json({ error: "You can only delete your own message" });
+    }
+    await GroupMessage.findByIdAndDelete(id);
+
+    // Emit socket event to notify all room participants (using course and semester)
+    const roomName = `${message.course}-${message.semester}`;
+    io.to(roomName).emit("messageDeleted", { messageId: id });
+    res.status(200).json({ message: "Group message deleted successfully", messageId: id });
+  } catch (error) {
+    console.error("Error in deleteGroupMessage:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

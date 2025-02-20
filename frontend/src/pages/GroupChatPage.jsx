@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react"; // ADDED: useState import
 import { useGroupChatStore } from "../store/useGroupChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import GroupChatHeader from "../components/GroupChatHeader";
@@ -6,7 +6,7 @@ import MessageInput from "../components/MessageInput";
 import { formatMessageTime } from "../lib/utils";
 
 const GroupChatPage = () => {
-  const { authUser } = useAuthStore();
+  const { authUser, reportUser } = useAuthStore(); // CHANGED: destructure reportUser
   const {
     groupMessages,
     isLoading,
@@ -14,10 +14,18 @@ const GroupChatPage = () => {
     subscribeToGroupMessages,
     unsubscribeFromGroupMessages,
     sendGroupMessage,
+    deleteGroupMessage,
   } = useGroupChatStore();
   const messageEndRef = useRef(null);
 
-  // Fetch messages and subscribe to socket events on mount
+  // ADDED: State for managing dropdown for delete option (existing)
+  const [dropdownOpen, setDropdownOpen] = useState(null);
+  // ADDED: States for reporting a user in group chat
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportTargetUser, setReportTargetUser] = useState(null);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
+
   useEffect(() => {
     if (authUser) {
       getGroupMessages();
@@ -28,22 +36,51 @@ const GroupChatPage = () => {
     };
   }, [authUser, getGroupMessages, subscribeToGroupMessages, unsubscribeFromGroupMessages]);
 
-  // Auto-scroll to the bottom when new messages arrive
   useEffect(() => {
     if (messageEndRef.current && groupMessages.length) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [groupMessages]);
 
+  // ADDED: Toggle function for dropdown menus (delete)
+  const toggleDropdown = (messageId) => {
+    setDropdownOpen(dropdownOpen === messageId ? null : messageId);
+  };
+
+  // ADDED: Function to handle deletion of a group message
+  const handleDeleteGroupMessage = async (messageId) => {
+    await deleteGroupMessage(messageId);
+    setDropdownOpen(null);
+  };
+
+  // ADDED: Function to open report modal for a given user (from a message)
+  const openReportModal = (user) => {
+    setReportTargetUser(user);
+    setReportModalOpen(true);
+    // Reset previous report data
+    setReportReason("");
+    setReportDescription("");
+  };
+
+  // ADDED: Function to submit the report
+  const handleSubmitReport = async () => {
+    if (!reportReason) {
+      alert("Please select a reason for reporting.");
+      return;
+    }
+    // Call existing reportUser function with target user's id
+    await reportUser(reportTargetUser._id, reportReason, reportDescription);
+    setReportModalOpen(false);
+    setReportTargetUser(null);
+  };
+
   if (isLoading) {
     return (
       <div className="flex-1 flex flex-col h-screen">
-        {/* ✅ Sticky Chat Header */}
         <div className="sticky top-16 z-10 bg-base-100 shadow-md">
           <GroupChatHeader />
         </div>
         <div className="flex-1 p-4 overflow-y-auto pt-20">Loading messages...</div>
-        {/* ✅ Fixed Message Input at Bottom */}
         <div className="sticky bottom-0 bg-base-100 shadow-md">
           <MessageInput sendMessage={sendGroupMessage} />
         </div>
@@ -53,70 +90,171 @@ const GroupChatPage = () => {
 
   return (
     <div className="flex-1 flex flex-col h-screen">
-      {/* ✅ Sticky Chat Header */}
       <div className="sticky top-16 z-10 bg-base-100 shadow-md">
         <GroupChatHeader />
       </div>
 
-      {/* ✅ Scrollable Messages with Padding to Prevent Overlap */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-20">
-        {groupMessages.map((message) => (
-          <div
-            key={message._id}
-            className={`chat ${
-              message.senderId._id === authUser._id ? "chat-end" : "chat-start"
-            }`}
-          >
-            <div className="chat-image avatar">
-              <div className="w-10 h-10 rounded-full border">
-                <img
-                  src={
-                    message.senderId._id === authUser._id
-                      ? authUser.profilePic || "/avatar.png"
-                      : message.senderId.profilePic || "/avatar.png"
-                  }
-                  alt="profile"
-                />
+        {groupMessages.map((message) => {
+          // Fallback values if sender is deleted
+          const senderId = message.senderId?._id || "deleted";
+          const senderFullName = message.senderId?.fullName || "Deleted User";
+          const senderProfilePic = message.senderId?.profilePic || "/avatar.png";
+          const chatAlignment = senderId === authUser._id ? "chat-end" : "chat-start";
+
+          return (
+            <div
+              key={message._id}
+              className={`chat ${chatAlignment} relative`}
+              ref={messageEndRef}
+            >
+              <div className="chat-image avatar">
+                <div className="w-10 h-10 rounded-full border">
+                  <img
+                    src={
+                      senderId === authUser._id
+                        ? authUser.profilePic || "/avatar.png"
+                        : senderProfilePic
+                    }
+                    alt="profile"
+                  />
+                </div>
+              </div>
+              <div className="chat-header mb-1">
+                <span className="font-bold">{senderFullName}</span>
+                <time className="text-xs opacity-50 ml-1">
+                  {formatMessageTime(message.createdAt)}
+                </time>
+              </div>
+              <div className="chat-bubble flex flex-col">
+                {message.image && (
+                  <img
+                    src={message.image}
+                    alt="attachment"
+                    className="sm:max-w-[200px] rounded-md mb-2"
+                  />
+                )}
+                {message.file && (
+                  <a
+                    href={`${message.file}?fl_attachment=true`}
+                    download={message.fileName}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 underline break-all mb-2"
+                  >
+                    {message.fileName || "Download File"}
+                  </a>
+                )}
+                {message.text && <p>{message.text}</p>}
+                
+                {/* ADDED: Three-dots dropdown for reporting a user on received messages */}
+                {senderId !== authUser._id && (
+                  <div className="dropdown dropdown-end absolute top-0 -right-8 z-50">
+                    <button
+                      tabIndex={0}
+                      className="btn btn-ghost btn-circle"
+                      onClick={() => toggleDropdown(message._id)}
+                    >
+                      <div className="w-6">⋮</div>
+                    </button>
+                    {dropdownOpen === message._id && (
+                      <ul
+                        tabIndex={0}
+                        className="dropdown-content menu p-2 shadow bg-red-200 rounded-box w-32"
+                      >
+                        <li>
+                          <button
+                            onClick={() => openReportModal(message.senderId)}
+                            className="font-bold text-black"
+                          >
+                            Report User
+                          </button>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
+                )}
+
+                {/* ADDED: Three-dots dropdown for deletion (for messages sent by current user) */}
+                {senderId === authUser._id && (
+                  <div className="dropdown dropdown-start absolute top-0 -left-8 z-50">
+                    <button
+                      tabIndex={0}
+                      className="btn btn-ghost btn-circle"
+                      onClick={() => toggleDropdown(message._id)}
+                    >
+                      <div className="w-6">⋮</div>
+                    </button>
+                    {dropdownOpen === message._id && (
+                      <ul
+                        tabIndex={0}
+                        className="dropdown-content menu p-2 shadow bg-red-200 rounded-box w-32"
+                      >
+                        <li>
+                          <button
+                            onClick={() => handleDeleteGroupMessage(message._id)}
+                            className="font-bold text-black"
+                          >
+                            Delete Message
+                          </button>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-            <div className="chat-header mb-1">
-              <span className="font-bold">
-                {message.senderId.fullName || "Anonymous"}
-              </span>
-              <time className="text-xs opacity-50 ml-1">
-                {formatMessageTime(message.createdAt)}
-              </time>
-            </div>
-            <div className="chat-bubble flex flex-col">
-              {message.image && (
-                <img
-                  src={message.image}
-                  alt="attachment"
-                  className="sm:max-w-[200px] rounded-md mb-2"
-                />
-              )}
-              {message.file && (
-                <a
-                  href={`${message.file}?fl_attachment=true`}
-                  download={message.fileName}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 underline break-all mb-2"
-                >
-                  {message.fileName || "Download File"}
-                </a>
-              )}
-              {message.text && <p>{message.text}</p>}
-            </div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={messageEndRef} />
       </div>
 
-      {/* ✅ Fixed Message Input at Bottom */}
       <div className="sticky bottom-0 bg-base-100 shadow-md">
         <MessageInput sendMessage={sendGroupMessage} />
       </div>
+
+      {/* ADDED: Inline Report Modal for Group Chat */}
+      {reportModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-md w-80">
+            <h2 className="text-lg font-bold mb-4">Report User</h2>
+            <label className="block mb-2">Reason:</label>
+            <select
+              className="w-full p-2 border rounded mb-4"
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+            >
+              <option value="">Select a reason</option>
+              <option value="Spam">Spam</option>
+              <option value="Harassment">Harassment</option>
+              <option value="Sensitive Content">Sensitive Content</option>
+              <option value="Other">Other</option>
+            </select>
+            <label className="block mb-2">Description (optional):</label>
+            <textarea
+              className="w-full p-2 border rounded mb-4"
+              rows="3"
+              placeholder="Provide more details..."
+              value={reportDescription}
+              onChange={(e) => setReportDescription(e.target.value)}
+            ></textarea>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setReportModalOpen(false)}
+                className="px-4 py-2 bg-gray-300 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitReport}
+                className="px-4 py-2 bg-red-500 text-white rounded"
+              >
+                Submit Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

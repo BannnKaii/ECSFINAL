@@ -1,7 +1,7 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import cloudinary from "../lib/cloudinary.js";
-import { getReceiverSocketId, io } from "../lib/socket.js";
+import { getReceiverSocketId, io } from "../lib/socket.js"; // CHANGED: Using ES module import
 
 export const getUsersForSidebar = async (req, res) => {
   try {
@@ -114,6 +114,33 @@ export const sendMessage = async (req, res) => {
     res.status(201).json(newMessage);
   } catch (error) {
     console.error("Error in sendMessage controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+// Delete one-to-one message (hard delete)
+export const deleteMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+    const message = await Message.findById(id);
+    if (!message) return res.status(404).json({ error: "Message not found" });
+    // Only the sender can delete the message
+    if (message.senderId.toString() !== userId.toString()) {
+      return res.status(403).json({ error: "You can only delete your own message" });
+    }
+    await Message.findByIdAndDelete(id);
+
+    // CHANGED: Removed require() and use already imported getReceiverSocketId and io
+    const receiverId = message.receiverId;
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("messageDeleted", { messageId: id });
+    }
+    res.status(200).json({ message: "Message deleted successfully", messageId: id });
+  } catch (error) {
+    console.error("Error in deleteMessage:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

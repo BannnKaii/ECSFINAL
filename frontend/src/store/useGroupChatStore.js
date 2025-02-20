@@ -69,6 +69,10 @@ export const useGroupChatStore = create((set, get) => ({
             console.log("⚠️ Duplicate message ignored:", newMessage._id);
         }
     });
+     // ADDED: Listen for deletion events
+     socket.on("messageDeleted", ({ messageId }) => {
+      set({ groupMessages: get().groupMessages.filter(m => m._id !== messageId) });
+    });
 },
 
 
@@ -78,6 +82,17 @@ export const useGroupChatStore = create((set, get) => ({
     if (socket) {
       socket.disconnect();
       set({ socket: null });
+    }
+  },
+
+
+  // ADDED: Function to delete group message
+  deleteGroupMessage: async (messageId) => {
+    try {
+      await axiosInstance.delete(`/group-messages/${messageId}`);
+      set({ groupMessages: get().groupMessages.filter(m => m._id !== messageId) });
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to delete group message");
     }
   },
 }));
