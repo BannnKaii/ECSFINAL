@@ -88,9 +88,14 @@ export const sendMessage = async (req, res) => {
     }
 
     if (file) {
-      const fileUploadResponse = await cloudinary.uploader.upload(file, { resource_type: "raw" });
+      const fileUploadResponse = await cloudinary.uploader.upload(file, {
+        resource_type: "raw",
+        public_id: fileName.split(".").slice(0, -1).join("."), // Preserve original filename without extension
+        format: fileName.split(".").pop(), // Ensure correct file format
+      });
       fileUrl = fileUploadResponse.secure_url;
     }
+    
 
     const newMessage = new Message({
       senderId,

@@ -175,49 +175,57 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  connectSocket:()=>{
-    const {authUser} = get()
-    
-
+  connectSocket: () => {
+    const { authUser } = get();
+  
     if (!authUser || !authUser.course || !authUser.semester) {
       console.warn("⚠️ Skipping socket connection: Missing user data", authUser);
       return;
-  }
-  if (get().socket) return;
-
-  console.log("🔗 Connecting socket for user:", authUser._id, "Course:", authUser.course, "Semester:", authUser.semester);
-
-
-    const socket = io(BASE_URL,{
-     query:{
-      userId:authUser._id,
-     },
+    }
+    
+    // Disconnect existing socket if present to avoid duplicate connections
+    if (get().socket) {
+      get().disconnectSocket();
+    }
+  
+    console.log(
+      "🔗 Connecting socket for user:",
+      authUser._id,
+      "Course:",
+      authUser.course,
+      "Semester:",
+      authUser.semester
+    );
+  
+    // Initialize socket with complete query data
+    const socket = io(BASE_URL, {
+      query: {
+        userId: authUser._id,
+        course: authUser.course,
+        semester: authUser.semester,
+      },
     });
-    //socket.connect();
-
-    set({ socket:socket});
-
-
+  
+    set({ socket });
+  
     socket.on("connect", () => {
       console.log("✅ Socket connected with ID:", socket.id);
-      
-      // ✅ Ensure user is subscribed to real-time group messages
+      // Subscribe to group messages as soon as the socket is connected
       useGroupChatStore.getState().subscribeToGroupMessages();
-  });
-
-
-
+    });
+  
+    // Listen for online users updates from the server
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
-
+  
+    // Listen for ban notifications from the server
     socket.on("banned", (data) => {
       toast.error(data.message || "You have been banned from the app.");
       get().logout();
     });
-
-
   },
+  
 
   disconnectSocket:()=>{
     if(get().socket?.connected)get().socket.disconnect();

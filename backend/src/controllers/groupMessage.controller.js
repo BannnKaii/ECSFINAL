@@ -29,9 +29,16 @@ export const sendGroupMessage = async (req, res) => {
       imageUrl = imageUploadResponse.secure_url;
     }
     if (file) {
-      const fileUploadResponse = await cloudinary.uploader.upload(file, { resource_type: "raw" });
+      const fileUploadResponse = await cloudinary.uploader.upload(file, {
+        resource_type: "raw",
+        public_id: fileName, // Store with full original filename
+        use_filename: true, // Ensure Cloudinary respects the filename
+        unique_filename: false, // Prevent Cloudinary from renaming
+      });
       fileUrl = fileUploadResponse.secure_url;
     }
+    
+    
 
     const newMessage = new GroupMessage({
       senderId: req.user._id,
