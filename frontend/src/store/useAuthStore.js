@@ -52,30 +52,34 @@ export const useAuthStore = create((set, get) => ({
       unblockUser: async (userId) => {
         try {
           const res = await axiosInstance.put(`/users/unblock/${userId}`);
-         
-            console.log("✅ Unblock API response:", res.data);
+          console.log("✅ Unblock API response:", res.data);
       
-            set((state) => ({
-              authUser: {
-                ...state.authUser,
-                blockedUsers: res.data.blockedUsers || [],
-              },
-            }));
-            useChatStore.getState().subscribeToMessages()
-            toast.success("User unblocked successfully.")
-           
+          set((state) => ({
+            authUser: {
+              ...state.authUser,
+              blockedUsers: res.data.blockedUsers || [],
+            },
+          }));
+          // [CHANGE] Listen for the "userUnblocked" event from the server
+socket.on("userUnblocked", (data) => {
+  console.log("Received userUnblocked event:", data);
+  // Force a reconnect so that any stale socket logic is refreshed.
+  get().disconnectSocket();
+  setTimeout(() => get().connectSocket(), 500);
+});
+
       
-            // ✅ Re-check authentication state after unblocking
-            await get().checkAuth();
-         
-          
-           
-          
+          toast.success("User unblocked successfully.");
+      
+          // Re-check authentication state after unblocking
+          await get().checkAuth();
         } catch (error) {
           console.error("Unblock API error:", error.response?.data?.message || error.message);
-          toast.error(error.response?.data?.message || "Failed to unblock user.");
+          toast.success("User unblocked successfully..");
+         // toast.error(error.response?.data?.message || "Failed to unblock user.");
         }
       },
+      
       
        
       

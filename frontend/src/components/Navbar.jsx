@@ -30,15 +30,19 @@ const Navbar = () => {
             {!isAdminPage && (
               <>
                 {/* Group Chat link appears first */}
+                {authUser && (
                 <Link to="/group-chat" className="btn btn-sm gap-2 transition-colors">
                   <Users className="w-4 h-4" />
                   <span className="hidden sm:inline">Group Chat</span>
                 </Link>
+                )}
                 {/* Settings link comes after Group Chat */}
+                {authUser && (
                 <Link to="/settings" className="btn btn-sm gap-2 transition-colors">
                   <Settings className="w-4 h-4" />
                   <span className="hidden sm:inline">Settings</span>
                 </Link>
+                )}
                 {authUser && (
                   <Link to="/profile" className="btn btn-sm gap-2">
                     <User className="size-5" />

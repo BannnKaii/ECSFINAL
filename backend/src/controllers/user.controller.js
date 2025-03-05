@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import DeletedUser from "../models/deletedUser.model.js";
+import { io, getReceiverSocketId } from "../lib/socket.js";
 
 export const blockUser = async (req, res) => {
   try {
@@ -25,11 +26,18 @@ export const unblockUser = async (req, res) => {
 
     if (!loggedInUser) return res.status(404).json({ message: "User not found" });
 
-    // ✅ Ensure blockedUsers is updated correctly
+    // [CHANGE] Update blockedUsers list after unblocking userId
     loggedInUser.blockedUsers = loggedInUser.blockedUsers.filter((id) => id.toString() !== userId);
     await loggedInUser.save();
 
-    // ✅ Send updated blockedUsers list to frontend
+    // After updating and saving the user's blockedUsers list:
+const receiverSocketId = getReceiverSocketId(userId);
+if (receiverSocketId) {
+  // [CHANGE] Emit a userUnblocked event to notify the unblocked user
+  io.to(receiverSocketId).emit("userUnblocked", { userId: loggedInUser._id });
+}
+
+
     res.status(200).json({ 
       message: "User unblocked successfully", 
       blockedUsers: loggedInUser.blockedUsers 

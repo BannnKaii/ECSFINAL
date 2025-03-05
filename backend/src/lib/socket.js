@@ -42,6 +42,15 @@ io.on("connection", (socket) => {
     console.log(`Socket ${socket.id} joined room: ${roomName}`);
   }
 
+
+  // [CHANGE] Listen for the "userUnblocked" event to optionally trigger reconnection or custom logic
+  socket.on("userUnblocked", (data) => {
+    console.log(`🔓 Received userUnblocked event for userId: ${data.userId} on socket: ${socket.id}`);
+    // For example, you might want to force the socket to reconnect:
+    socket.disconnect(true);
+    // Note: The client should handle reconnection logic.
+  });
+
   // Emit updated online users list
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
@@ -53,6 +62,10 @@ io.on("connection", (socket) => {
     }
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
+
+
+
+
 });
 
 export { io, app, server };
