@@ -16,7 +16,7 @@ import { useThemeStore } from "./store/useThemeStore";
 import { useEffect } from "react";
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
-
+import SnakeGame from "./pages/snake";
 import { useNavigate } from "react-router-dom"; 
 
 function App() {
@@ -70,6 +70,7 @@ function App() {
         <Route path="/send" element={authUser ? <SendFriendRequestPage /> :  <Navigate to="/login" />} />
         <Route path="/accept" element={authUser ? <FriendRequestsPage /> :  <Navigate to="/login" />} />
         <Route path="/chatbot" element={authUser ? <ChatBot /> :  <Navigate to="/login" />} />
+        <Route path="/snake" element={authUser ? <SnakeGame /> :  <Navigate to="/login" />} />
       </Routes>
 
       <Toaster />
