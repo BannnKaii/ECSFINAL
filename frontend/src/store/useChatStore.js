@@ -22,6 +22,25 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
+
+
+  fetchContacts: async () => {
+    set({ isUsersLoading: true });
+    try {
+      const friendsRes = await axiosInstance.get("/friends/friends");
+      set({ users: friendsRes.data });
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to load contacts.");
+    } finally {
+      set({ isUsersLoading: false });
+    }
+  },
+  
+
+
+
+
+
   getMessages: async (userId) => {
     const { authUser } = useAuthStore.getState();
   

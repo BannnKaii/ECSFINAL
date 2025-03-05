@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { LogOut, MessageSquare, Settings, User, Users } from "lucide-react";
+import { LogOut, MessageSquare, Settings, User, Users,Handshake } from "lucide-react";
 
 const Navbar = () => {
   const { logout, authUser } = useAuthStore();
@@ -29,6 +29,18 @@ const Navbar = () => {
           <div className="flex items-center gap-2">
             {!isAdminPage && (
               <>
+              {authUser && (
+                <Link to="/accept" className="btn btn-sm gap-2 transition-colors">
+                  <Handshake className="w-4 h-4" />
+                  <span className="hidden sm:inline">Friend Requests</span>
+                </Link>
+                )}
+              {authUser && (
+                <Link to="/send" className="btn btn-sm gap-2 transition-colors">
+                  <Handshake className="w-4 h-4" />
+                  <span className="hidden sm:inline">Add Friends</span>
+                </Link>
+                )}
                 {/* Group Chat link appears first */}
                 {authUser && (
                 <Link to="/group-chat" className="btn btn-sm gap-2 transition-colors">

@@ -8,6 +8,8 @@ import ProfilePage from "./pages/ProfilePage";
 import  SelectedUserProfile from "./pages/SelectedUserProfile";
 import AdminPage from "./pages/AdminPage";
 import GroupChatPage from "./pages/GroupChatPage";
+import FriendRequestsPage from "./pages/FriendRequestsPage";
+import SendFriendRequestPage from "./pages/SendFriendRequestPage";
 
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
@@ -65,7 +67,8 @@ function App() {
         <Route path="/admin" element={authUser && authUser.isAdmin ? <AdminPage /> : <Navigate to="/" />} />
 
         <Route path="/group-chat" element={authUser ? <GroupChatPage /> :  <Navigate to="/login" />} />
-
+        <Route path="/send" element={authUser ? <SendFriendRequestPage /> :  <Navigate to="/login" />} />
+        <Route path="/accept" element={authUser ? <FriendRequestsPage /> :  <Navigate to="/login" />} />
       </Routes>
 
       <Toaster />

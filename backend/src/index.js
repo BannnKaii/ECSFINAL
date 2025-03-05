@@ -13,6 +13,8 @@ import reportRoutes from "./routes/report.route.js";
 import userRoutes from "./routes/user.route.js"; 
 import adminRoutes from "./routes/admin.route.js";
 import groupMessageRoutes from "./routes/groupMessage.route.js";
+
+import friendRequestRoutes from "./routes/friendRequest.route.js";
 dotenv.config();
 
 const PORT = process.env.PORT;
@@ -43,6 +45,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/group-messages", groupMessageRoutes);
+app.use("/api/friends", friendRequestRoutes);
 // Start the server
 server.listen(PORT, () => {
   console.log("Server is running on PORT: " + PORT);
