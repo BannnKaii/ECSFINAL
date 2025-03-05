@@ -2,9 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-
 import { connectDB } from "./lib/db.js";
-
+import friendRoutes from "./routes/translate.route.js"; // Add this line
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import { app, server } from "./lib/socket.js";
@@ -18,7 +17,7 @@ import friendRequestRoutes from "./routes/friendRequest.route.js";
 dotenv.config();
 
 const PORT = process.env.PORT;
-
+ 
 // Middleware
 app.use(express.json({ limit: "50mb" })); // Increase JSON payload limit to handle large files
 app.use(express.urlencoded({ extended: true, limit: "50mb" })); // Increase URL-encoded payload limit
@@ -40,6 +39,7 @@ app.options("*", cors());
 // Define API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api", friendRoutes); // Add this line
 
 app.use("/api/users", userRoutes);
 app.use("/api/reports", reportRoutes);

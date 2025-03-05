@@ -2,6 +2,9 @@ import { useRef, useState } from "react";
 import { Paperclip, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { useChatStore } from "../store/useChatStore";
+import leoProfanity from "leo-profanity";
+
+leoProfanity.loadDictionary();
 
 const MessageInput = ({ sendMessage: customSendMessage }) => {
   const [text, setText] = useState("");
@@ -52,7 +55,12 @@ const MessageInput = ({ sendMessage: customSendMessage }) => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!text.trim() && !imagePreview && !filePreview) return;
-
+        // Check for abusive language using leo-profanity
+        if (leoProfanity.check(text)) {
+          toast.error("Your message contains abusive language. Please modify it.");
+          return;
+        }
+        
     try {
       await sendMsg({
         text: text.trim(),

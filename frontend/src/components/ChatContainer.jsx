@@ -5,7 +5,8 @@ import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
-
+import { Languages } from "lucide-react";
+import axiosInstance from "../lib/axios";
 const ChatContainer = () => {
   const {
     messages,
@@ -18,7 +19,18 @@ const ChatContainer = () => {
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
-
+  const [translations, setTranslations] = useState({}); // key: message id, value: translated text
+  const [loadingTranslations, setLoadingTranslations] = useState({}); // key: message id, value: boolean
+  
+  const [selectedImage, setSelectedImage] = useState(null);
+  const openImageFullscreen = (imageUrl) => {
+    setSelectedImage(imageUrl);
+  };
+  
+  const closeImageFullscreen = () => {
+    setSelectedImage(null);
+  };
+  
   // ADDED: State to manage which message's dropdown is open
   const [dropdownOpen, setDropdownOpen] = useState(null);
 
@@ -33,6 +45,26 @@ const ChatContainer = () => {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+  
+  // Function to call the backend translation endpoint using axiosInstance
+  const handleTranslate = async (messageId, text) => {
+    // Prevent multiple requests for the same message
+    if (loadingTranslations[messageId]) return;
+    setLoadingTranslations((prev) => ({ ...prev, [messageId]: true }));
+
+    try {
+      // Make a POST request using axiosInstance
+      const { data } = await axiosInstance.post("/translate", {
+        text,
+        target: "ml", // Malayalam target language code
+      });
+      setTranslations((prev) => ({ ...prev, [messageId]: data.translatedText }));
+    } catch (err) {
+      console.error("Translation request failed:", err);
+    } finally {
+      setLoadingTranslations((prev) => ({ ...prev, [messageId]: false }));
+    }
+  };
 
   // ADDED: Toggle function for dropdown menu
   const toggleDropdown = (messageId) => {
@@ -112,13 +144,18 @@ const ChatContainer = () => {
                   )}
                 </div>
               )}
+
+
               {message.image && (
                 <img
-                  src={message.image}
-                  alt="Attachment"
-                  className="sm:max-w-[200px] rounded-md mb-2"
+                src={message.image}
+                alt="Attachment"
+                className="sm:max-w-[200px] rounded-md mb-2 cursor-pointer"
+                onClick={() => openImageFullscreen(message.image)}
                 />
               )}
+
+
               {message.file && (
                 <a
                   href={`${message.file}?fl_attachment=true`} // Cloudinary attachment flag
@@ -130,7 +167,46 @@ const ChatContainer = () => {
                   {message.fileName || "Download File"}
                 </a>
               )}
-              {message.text && <p>{message.text}</p>}
+              
+              
+              {message.text && (
+                <>
+                  <p>{message.text}</p>
+                  {/* Display translated text if available */}
+                  {translations[message._id] && (
+                    <p className="mt-2 text-green-600">
+                      {translations[message._id]}
+                    </p>
+                  )}
+                  {/* Button to trigger translation */}
+                  <button
+                    onClick={() => handleTranslate(message._id, message.text)}
+                    className="btn btn-ghost btn-xs p-1"
+                    disabled={loadingTranslations[message._id]}
+                  >
+                    {loadingTranslations[message._id] ? (
+                      <span className="loading loading-spinner loading-xs"></span>
+                    ) : (
+                      <Languages className="size-4" />
+                    )}
+                  </button>
+                </>
+              )}
+
+                {selectedImage && (
+                <div
+                  className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+                  onClick={closeImageFullscreen}
+                >
+                  <div className="relative">
+                    <img src={selectedImage} alt="Fullscreen" className="max-w-full max-h-screen rounded-md" />
+                    <button className="absolute top-4 center text-black text-2xl" onClick={closeImageFullscreen}>
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
         ))}

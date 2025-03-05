@@ -48,6 +48,14 @@ const Navbar = () => {
                   <span className="hidden sm:inline">Group Chat</span>
                 </Link>
                 )}
+
+                {authUser && (
+                  <Link to="/chatbot" className="btn btn-sm gap-2">
+                    <User className="size-5" />
+                    <span className="hidden sm:inline">ChatBot</span>
+                  </Link>
+                )}
+
                 {/* Settings link comes after Group Chat */}
                 {authUser && (
                 <Link to="/settings" className="btn btn-sm gap-2 transition-colors">

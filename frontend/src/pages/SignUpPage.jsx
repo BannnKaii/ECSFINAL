@@ -20,9 +20,7 @@ const SignUpPage = () => {
   const { signup, isSigningUp } = useAuthStore();
 
   const coursesByCollege = {
-    "Navajyothi College, Cherupuzha": ["BCA", "BBA", "BA Economics"],
-    "Payyannur College": ["BBA", "BSC Chemistry ", "BA Economics"],
-    "Don Bosco Arts & Science College": ["BCA", "BBA", "B.Sc. Mathematics "],
+    "Kannur University": ["BCA", "BBA", "BA Economics"],
   };
 
   const validateForm = () => {
@@ -31,7 +29,8 @@ const SignUpPage = () => {
     if (!/\S+@\S+\.\S+/.test(formData.email)) return toast.error("Invalid email format");
     if (!formData.password) return toast.error("Password is required");
     if (formData.password.length < 6) return toast.error("Password must be at least 6 characters");
-    if (!formData.collegeName.trim()) return toast.error("College name is required");
+    if (formData.password !== formData.confirmPassword) return toast.error("Passwords do not match")
+    if (!formData.collegeName.trim()) return toast.error("University name is required");
     if (!formData.course.trim()) return toast.error("Course is required");
     if (!formData.semester.trim()) return toast.error("Semester is required");
 
@@ -82,6 +81,7 @@ const SignUpPage = () => {
                 />
               </div>
             </div>
+            
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Email</span>
@@ -99,6 +99,7 @@ const SignUpPage = () => {
                 />
               </div>
             </div>
+            
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Password</span>
@@ -127,16 +128,47 @@ const SignUpPage = () => {
                 </button>
               </div>
             </div>
+            
+            <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Confirm Password</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="size-5 text-base-content/40" />
+                  </div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className="input input-bordered w-full pl-10"
+                    placeholder="••••••••"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="size-5 text-base-content/40" />
+                    ) : (
+                      <Eye className="size-5 text-base-content/40" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            
+
             <div className="form-control">
               <label className="label">
-                <span className="label-text font-medium">College Name</span>
+                <span className="label-text font-medium">University Name</span>
               </label>
               <select
                 className="select select-bordered w-full"
                 value={formData.collegeName}
                 onChange={(e) => setFormData({ ...formData, collegeName: e.target.value, course: "" })}
               >
-                <option value="" disabled>Select your college</option>
+                <option value="" disabled>Select your University</option>
                 {Object.keys(coursesByCollege).map((college) => (
                   <option key={college} value={college}>{college}</option>
                 ))}

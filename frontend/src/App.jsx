@@ -10,7 +10,7 @@ import AdminPage from "./pages/AdminPage";
 import GroupChatPage from "./pages/GroupChatPage";
 import FriendRequestsPage from "./pages/FriendRequestsPage";
 import SendFriendRequestPage from "./pages/SendFriendRequestPage";
-
+import ChatBot from "./pages/ChatBot";
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
 import { useEffect } from "react";
@@ -20,7 +20,7 @@ import { Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router-dom"; 
 
 function App() {
-  const { authUser, checkAuth, isCheckingAuth,onlineUsers } = useAuthStore();
+  const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
   const { theme } = useThemeStore();
 
   const navigate = useNavigate(); // ✅ Define navigate
@@ -69,6 +69,7 @@ function App() {
         <Route path="/group-chat" element={authUser ? <GroupChatPage /> :  <Navigate to="/login" />} />
         <Route path="/send" element={authUser ? <SendFriendRequestPage /> :  <Navigate to="/login" />} />
         <Route path="/accept" element={authUser ? <FriendRequestsPage /> :  <Navigate to="/login" />} />
+        <Route path="/chatbot" element={authUser ? <ChatBot /> :  <Navigate to="/login" />} />
       </Routes>
 
       <Toaster />
