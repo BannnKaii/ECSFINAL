@@ -39,7 +39,7 @@ const AdminReports = () => {
 
   return (
     <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">User Reports</h2>
+      <h2 className="text-xl font-bold mb-4">Message Reports</h2>
       {reports.length === 0 ? (
         <p>No reports found.</p>
       ) : (
@@ -47,6 +47,7 @@ const AdminReports = () => {
           <thead>
             <tr className="bg-gray-100">
               <th className="border p-2">Reporter Info</th>
+              <th className="border p-2">Reported Message Info</th>
               <th className="border p-2">Reported User Info</th>
               <th className="border p-2">Reason</th>
               <th className="border p-2">Description</th>
@@ -57,6 +58,7 @@ const AdminReports = () => {
           <tbody>
             {reports.map((report) => (
               <tr key={report._id} className="text-center">
+                {/* Reporter Info */}
                 <td className="border p-2 text-left">
                   {report.reporter ? (
                     <>
@@ -74,6 +76,34 @@ const AdminReports = () => {
                     </>
                   )}
                 </td>
+                {/* Reported Message Info */}
+                <td className="border p-2 text-left">
+                  <strong>Text:</strong> {report.messageText || "N/A"} <br />
+                  {report.messageImage && (
+                    <>
+                      <strong>Image:</strong>{" "}
+                      <img
+                        src={report.messageImage}
+                        alt="Reported"
+                        className="w-12 h-12 inline-block ml-1"
+                      />{" "}
+                      <br />
+                    </>
+                  )}
+                  {report.messageFile && (
+                    <>
+                      <strong>File:</strong>{" "}
+                      <a
+                        href={report.messageFile}
+                        download={report.messageFileName || "File"}
+                        className="text-blue-500 underline"
+                      >
+                        {report.messageFileName || "Download"}
+                      </a>
+                    </>
+                  )}
+                </td>
+                {/* Reported User Info */}
                 <td className="border p-2 text-left">
                   {report.reportedUser ? (
                     <>
@@ -93,11 +123,7 @@ const AdminReports = () => {
                 </td>
                 <td className="border p-2">{report.reason}</td>
                 <td className="border p-2">{report.description || "N/A"}</td>
-                <td
-                  className={`border p-2 ${
-                    report.status === "Reviewed" ? "text-green-500" : "text-red-500"
-                  }`}
-                >
+                <td className={`border p-2 ${report.status === "Reviewed" ? "text-green-500" : "text-red-500"}`}>
                   {report.status}
                 </td>
                 <td className="border p-2">

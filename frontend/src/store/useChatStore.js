@@ -67,21 +67,18 @@ export const useChatStore = create((set, get) => ({
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
     const { authUser } = useAuthStore.getState();
-    console.log("auth",authUser)
-
-    if (!authUser?.blockedUsers || !Array.isArray(authUser.blockedUsers)) {
-      console.warn("Blocked users data is missing or not an array.");
-      return
-    }
-
-    if (authUser.blockedUsers.includes(selectedUser._id)) {
+    console.log("auth", authUser);
+  
+    // Default blockedUsers to an empty array if missing or not an array
+    const blockedUsers = Array.isArray(authUser?.blockedUsers) ? authUser.blockedUsers : [];
+    
+    if (blockedUsers.includes(selectedUser._id)) {
       toast.error("You have blocked this user.");
       return;
     }
-
+  
     try {
       const formData = new FormData();
-
       Object.keys(messageData).forEach((key) => {
         if (messageData[key]) {
           if (key === "file" && messageData[key].data) {
@@ -92,17 +89,18 @@ export const useChatStore = create((set, get) => ({
           }
         }
       });
-
+  
       const res = await axiosInstance.post(
         `/messages/send/${selectedUser._id}`,
         formData
       );
-
+  
       set({ messages: [...messages, res.data] });
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to send message.");
     }
   },
+  
 
 
 
@@ -121,34 +119,32 @@ export const useChatStore = create((set, get) => ({
   subscribeToMessages: () => {
     const { selectedUser } = get();
     if (!selectedUser) return;
-
+  
     const { authUser, socket } = useAuthStore.getState();
-
+  
     socket.on("newMessage", (newMessage) => {
       const isMessageRelevant =
-        newMessage.senderId === selectedUser._id || newMessage.receiverId === selectedUser._id;
-
-      if (!authUser?.blockedUsers || !Array.isArray(authUser.blockedUsers)) {
-        console.warn("Blocked users data is missing or not an array.");
-        return;
-      }
-
-      if (authUser.blockedUsers.includes(newMessage.senderId)) {
+        newMessage.senderId === selectedUser._id ||
+        newMessage.receiverId === selectedUser._id;
+  
+      // Default blockedUsers to an empty array if missing or not an array
+      const blockedUsers = Array.isArray(authUser?.blockedUsers) ? authUser.blockedUsers : [];
+  
+      if (blockedUsers.includes(newMessage.senderId)) {
         console.warn("Blocked user message ignored:", newMessage);
         return;
       }
-
+      
       if (isMessageRelevant) {
         set({ messages: [...get().messages, newMessage] });
       }
     });
-
-    // Listen for message deletion events
+  
     socket.on("messageDeleted", ({ messageId }) => {
       set({ messages: get().messages.filter(m => m._id !== messageId) });
     });
   },
-
+  
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");

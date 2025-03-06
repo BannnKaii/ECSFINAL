@@ -13,6 +13,7 @@ const SignUpPage = () => {
     fullName: "",
     email: "",
     password: "",
+    confirmPassword: "", // Add this line
     collegeName: "",
     course: "",
     semester: "",

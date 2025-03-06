@@ -240,14 +240,15 @@ socket.on("userUnblocked", (data) => {
   },
 
 
-  reportUser: async (reportedUser, reason, description) => {
+  reportUser: async (reportedMessage, reason, description) => {
     try {
-      await axiosInstance.post("/reports", { reportedUser, reason, description });
+      await axiosInstance.post("/reports", { reportedMessage, reason, description });
       toast.success("Report submitted successfully.");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to submit report.");
     }
   },
+  
 
 
 
